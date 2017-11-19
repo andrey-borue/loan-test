@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Credit calculator</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react-dom.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.6.15/browser.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+</head>
+<body>
+
+<div class="container">
+    <div id='content'></div>
+</div>
+
+<br />
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <div id='result-table'></div>
+        </div>
+    </div>
+
+</div>
+
+<script type="text/babel">
+
+  const FORM = [
+    [
+      {'id': 1, 'default': 1000, 'type': 'number', 'name': 'loan_amount', 'title': 'Loan amount', 'pattern': '[0-9]+'},
+      {'id': 2, 'default': 36, 'type': 'number', 'name': 'loan_period', 'title': 'Loan period in month', 'pattern': '[0-9]+'}
+    ],
+    [
+      {'id': 3, 'default': 10, 'type': 'number', 'name': 'interest_rate', 'title': 'Rate', 'pattern': '[0-9]+'},
+      {'id': 4, 'default': '2017-10-27', 'type': 'string', 'name': 'first_payment_date', 'title': 'First payment date (YYYY-MM-DD)', 'pattern': '[0-9]{4}\-[0-9]{2}\-[0-9]{2}'}
+    ]
+  ];
+
+
+  let App = React.createClass({
+    formData: {},
+
+    getInitialState: function() {
+      return {
+        displayedPayments: false
+      };
+    },
+
+
+    setFormData: function(key, val) {
+      this.formData[key] = val;
+    },
+
+    handleChange: function(e) {
+      this.formData[e.target.name] = e.target.value;
+    },
+
+
+    handleSubmit: function(e) {
+      e.preventDefault();
+      const data = new FormData();
+      for (let k in this.formData) {
+        data.append(k, this.formData[k]);
+      }
+
+      let t = this;
+
+      axios
+        .post('http://127.0.0.1:8000/calculate', data)
+        .catch(error => {
+          console.log(error);
+        })
+        .then(res => {
+          t.setState({
+            displayedPayments: res.data
+          });
+        })
+
+
+    },
+
+    render: function() {
+        return (
+          <div className="container">
+              <LoanForm handleSubmit={this.handleSubmit} handleChange={this.handleChange} setFormData={this.setFormData} formData={this.formData} />
+              <br />
+              <PaymentList displayedPayments={this.state.displayedPayments} />
+          </div>
+        )
+    }
+  });
+
+  let LoanForm = React.createClass({
+    formData: {},
+    getInitialState: function() {
+      return {
+        els: FORM
+      };
+    },
+
+    render: function() {
+      let t = this;
+      return (
+        <form method="POST" onSubmit={this.props.handleSubmit}>
+            <div className="row">
+                <div className="col-6">
+                  {
+                    this.state.els[0].map(function(el) {
+                      t.props.setFormData(el.name, el.default);
+                      return <LoanInput valChange={t.props.handleChange} key={el.id} type={el.type} name={el.name} title={el.title} pattern={el.pattern} />;
+                    })
+                  }
+                </div>
+                <div className="col-6">
+                  {
+                    this.state.els[1].map(function(el) {
+                      t.props.setFormData(el.name, el.default);
+                      return <LoanInput valChange={t.props.handleChange} key={el.id} type={el.type} name={el.name} title={el.title} pattern={el.pattern} />;
+                    })
+                  }
+                </div>
+                <button type="submit" className="btn btn-primary">Calculate</button>
+            </div>
+        </form>
+      )
+    }
+
+  });
+
+  let LoanInput = React.createClass({
+    render: function() {
+      let  required=true;
+      return (
+        <div className="form-group">
+            <label>{this.props.title}</label>
+            <input pattern={this.props.pattern} onChange={this.props.valChange} value={this.props.default} type={this.props.type} className="form-control" id={this.props.name} placeholder={this.props.title} name={this.props.name}  required={required} />
+        </div>
+      );
+    }
+  });
+
+  let Payment = React.createClass({
+    render: function() {
+      return (
+        <tr>
+            <th scope="row">{this.props.id}</th>
+            <td>{this.props.date}</td>
+            <td>{this.props.percent}</td>
+            <td>+</td>
+            <td>{this.props.debt}</td>
+            <td>=</td>
+            <td>{this.props.payment}</td>
+        </tr>
+      );
+    }
+  });
+
+  let PaymentList = React.createClass({
+    change: function(data) {
+      this.setState({
+        displayedPayments: data
+      });
+    },
+    render: function () {
+      if (this.props.displayedPayments) {
+        let monthlyCosts = this.props.displayedPayments.monthly_costs;
+        return (
+          <table className="table">
+              <thead>
+              <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Percent</th>
+                  <th scope="col"></th>
+                  <th scope="col">Debt</th>
+                  <th scope="col"></th>
+                  <th scope="col">Payment</th>
+              </tr>
+              </thead>
+              <tbody>
+              {
+                this.props.displayedPayments.payments.map(function(el) {
+                  return <Payment
+                    key={el.id}
+                    id={el.id}
+                    date={el.date}
+                    percent={el.percent}
+                    debt={el.debt}
+                    payment={monthlyCosts}
+                  />;
+                })
+              }
+              </tbody>
+          </table>
+        )
+
+      } else {
+        return (
+          <div></div>
+        )
+      }
+    }
+  });
+
+
+  ReactDOM.render(
+    <App />,
+    document.getElementById('content')
+  );
+
+</script>
+</body>
+</html>
