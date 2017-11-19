@@ -1,9 +1,12 @@
 <?php
+declare(strict_types=1);
 namespace AppBundle\Loan;
+
+use AppBundle\Dto\CalculateDto;
 
 class LoanCalculator {
 
-    private $amountBorrowed = 0;
+    private $amountBorrowed = 0.0;
     private $interestRate = 0.0;
     private $months = 0;
     /** @var  \DateTime */
@@ -24,9 +27,16 @@ class LoanCalculator {
         return round($payment,2);
     }
 
-    public function calculatePayments(): array
+    public function calculatePayments(): CalculateDto
     {
-        $result = [];
+        $result = new CalculateDto();
+        $result
+            ->setInterestRate($this->interestRate)
+            ->setLoanAmount($this->amountBorrowed)
+            ->setLoanPeriodMonth($this->months)
+            ->setMonthlyCosts($this->calculateRepayment());
+
+
         $repayment = $this->calculateRepayment();
         $date = $this->firstPaymentDate;
         $debt = 0;
@@ -35,13 +45,12 @@ class LoanCalculator {
             $balance -= $debt;
             $percent = $balance * $this->interestRate / 12;
             $debt = round($repayment - $percent, 2);
-            $result[] = [
-                'id' => $i,
-                'date' => $date->format('Y-m-d'),
-                'percent' => round($percent, 2),
-                'debt' => round($debt, 2),
-                'balance' => round($balance, 2),
-            ];
+            $result->createPayment()
+                ->setId($i)
+                ->setPercent(round($percent, 2))
+                ->setDate($date->format('Y-m-d'))
+                ->setDebt(round($debt, 2))
+                ->setBalance(round($balance, 2));
             $date = $date->modify('+1 month');
         }
 
@@ -56,7 +65,7 @@ class LoanCalculator {
         return $this;
     }
 
-    public function setAmountBorrowed(int $amount ): self
+    public function setAmountBorrowed(float $amount ): self
     {
         $this->amountBorrowed = $amount;
 

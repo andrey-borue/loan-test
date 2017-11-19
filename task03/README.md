@@ -10,3 +10,5 @@ How to run:
 ```php bin/console server:run```
 
 ```http://127.0.0.1:8000/```
+
+Consumer: ```bin/console rabbitmq:consumer payment -m 10```

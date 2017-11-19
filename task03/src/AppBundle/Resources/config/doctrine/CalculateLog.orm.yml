@@ -1,0 +1,20 @@
+AppBundle\Entity\CalculateLog:
+  type: entity
+  table: calculate_log
+  id:
+    id:
+      type: integer
+      id: true
+      generator:
+        strategy: AUTO
+  fields:
+    interestRate:
+      type: float
+    loanPeriodMonth:
+      type: integer
+    monthlyCosts:
+      type: float
+    payments:
+      type: json_array
+
+  lifecycleCallbacks: {  }

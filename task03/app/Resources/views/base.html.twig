@@ -32,12 +32,12 @@
 
   const FORM = [
     [
-      {'id': 1, 'default': 1000, 'type': 'number', 'name': 'loan_amount', 'title': 'Loan amount', 'pattern': '[0-9]+'},
-      {'id': 2, 'default': 36, 'type': 'number', 'name': 'loan_period', 'title': 'Loan period in month', 'pattern': '[0-9]+'}
+      {'id': 1, 'default': 1000, 'type': 'number', 'name': 'loanAmount', 'title': 'Loan amount', 'pattern': '[0-9]+'},
+      {'id': 2, 'default': 36, 'type': 'number', 'name': 'loanPeriod', 'title': 'Loan period in month', 'pattern': '[0-9]+'}
     ],
     [
-      {'id': 3, 'default': 10, 'type': 'number', 'name': 'interest_rate', 'title': 'Rate', 'pattern': '[0-9]+'},
-      {'id': 4, 'default': '2017-10-27', 'type': 'string', 'name': 'first_payment_date', 'title': 'First payment date (YYYY-MM-DD)', 'pattern': '[0-9]{4}\-[0-9]{2}\-[0-9]{2}'}
+      {'id': 3, 'default': 10, 'type': 'number', 'name': 'interestRate', 'title': 'Rate', 'pattern': '[0-9]+'},
+      {'id': 4, 'default': '2017-10-27', 'type': 'string', 'name': 'firstPaymentDate', 'title': 'First payment date (YYYY-MM-DD)', 'pattern': '[0-9]{4}\-[0-9]{2}\-[0-9]{2}'}
     ]
   ];
 
@@ -168,7 +168,7 @@
     },
     render: function () {
       if (this.props.displayedPayments) {
-        let monthlyCosts = this.props.displayedPayments.monthly_costs;
+        let monthlyCosts = this.props.displayedPayments.monthlyCosts;
         return (
           <table className="table">
               <thead>

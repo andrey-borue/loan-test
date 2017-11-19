@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AppBundle\Controller;
 
@@ -6,6 +7,8 @@ use AppBundle\Loan\LoanCalculator;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Serializer\SerializerInterface;
 
 class DefaultController extends Controller
 {
@@ -14,12 +17,12 @@ class DefaultController extends Controller
         return $this->render('default/index.html.twig');
     }
 
-    public function calculateAction(Request $request)
+    public function calculateAction(Request $request, SerializerInterface $serializer)
     {
-        $loanAmount = (int)$request->request->get('loan_amount');
-        $loanPeriod = (int)$request->request->get('loan_period');
-        $interestRate = (float)$request->request->get('interest_rate');
-        $firstPaymentDate = $request->request->get('first_payment_date');
+        $loanAmount = (int)$request->request->get('loanAmount');
+        $loanPeriod = (int)$request->request->get('loanPeriod');
+        $interestRate = (float)$request->request->get('interestRate');
+        $firstPaymentDate = $request->request->get('firstPaymentDate');
         $date = \DateTime::createFromFormat('Y-m-d', $firstPaymentDate);
 
         if (!$loanAmount || !$loanPeriod || !$interestRate || !$date) {
@@ -32,12 +35,14 @@ class DefaultController extends Controller
         $calculator->setMonths($loanPeriod);
         $calculator->setFirstPaymentDate($date);
 
-        return new JsonResponse([
-            'loan_amount' => $loanAmount,
-            'loan_period_month' => $loanPeriod,
-            'interest_rate' => $interestRate,
-            'monthly_costs' => $calculator->calculateRepayment(),
-            'payments' => $calculator->calculatePayments()
-        ]);
+        $result = $calculator->calculatePayments();
+
+        $publisher = $this->get('old_sound_rabbit_mq.payment_producer');
+        $publisher->publish(serialize($result));
+
+
+        $json = $serializer->serialize($result, 'json');
+
+        return new Response($json, Response::HTTP_OK, ['Content-Type' => 'application/json']);
     }
 }
